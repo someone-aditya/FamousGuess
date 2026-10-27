@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>FamousGuess</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- Background decoration -->
+    <div class="background-glow glow-one"></div>
+    <div class="background-glow glow-two"></div>
+
+    <!-- =========================
+         HOME SCREEN
+    ========================== -->
+    <main id="homeScreen" class="screen active">
+
+        <nav class="navbar">
+            <div class="logo">
+                <div class="logo-icon">?</div>
+                <span>Famous<span class="logo-highlight">Guess</span></span>
+            </div>
+
+            <button class="nav-button" id="howToPlayBtn">
+                How to Play
+            </button>
+        </nav>
+
+
+        <section class="hero">
+
+            <div class="hero-badge">
+                ✦ THE ULTIMATE GUESSING GAME
+            </div>
+
+            <h1>
+                Think of someone.<br>
+                <span>We'll guess who.</span>
+            </h1>
+
+            <p class="hero-description">
+                Choose any famous person or character in your mind.
+                Answer a few questions and FamousGuess will try to
+                discover exactly who you're thinking of.
+            </p>
+
+
+            <!-- Mystery character -->
+            <div class="mystery-container">
+
+                <div class="circle circle-three"></div>
+                <div class="circle circle-two"></div>
+                <div class="circle circle-one"></div>
+
+                <div class="mystery-orb">
+                    <span>?</span>
+                </div>
+
+            </div>
+
+
+            <button class="play-button" id="startGameBtn">
+                Start Guessing
+                <span>→</span>
+            </button>
+
+            <p class="small-text">
+                Think of someone before you start!
+            </p>
+
+        </section>
+
+    </main>
+
+
+
+    <!-- =========================
+         GAME SCREEN
+    ========================== -->
+    <main id="gameScreen" class="screen">
+
+        <nav class="navbar">
+
+            <div class="logo">
+                <div class="logo-icon">?</div>
+                <span>Famous<span class="logo-highlight">Guess</span></span>
+            </div>
+
+            <button class="nav-button" id="quitGameBtn">
+                Quit Game
+            </button>
+
+        </nav>
+
+
+        <section class="game-area">
+
+            <div class="question-counter">
+                QUESTION
+                <span id="questionNumber">1</span>
+            </div>
+
+
+            <div class="progress-container">
+                <div
+                    class="progress-bar"
+                    id="progressBar">
+                </div>
+            </div>
+
+
+            <div class="question-card">
+
+                <div class="mini-orb">
+                    ?
+                </div>
+
+                <p class="thinking-text">
+                    Let me think...
+                </p>
+
+                <h2 id="questionText">
+                    Is your character a real person?
+                </h2>
+
+
+                <div class="answers">
+
+                    <button
+                        class="answer-button yes"
+                        data-answer="yes">
+                        Yes
+                    </button>
+
+                    <button
+                        class="answer-button probably"
+                        data-answer="probably">
+                        Probably
+                    </button>
+
+                    <button
+                        class="answer-button unknown"
+                        data-answer="unknown">
+                        Don't Know
+                    </button>
+
+                    <button
+                        class="answer-button probably-not"
+                        data-answer="probably-not">
+                        Probably Not
+                    </button>
+
+                    <button
+                        class="answer-button no"
+                        data-answer="no">
+                        No
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+
+    <!-- =========================
+         GUESS SCREEN
+    ========================== -->
+    <main id="guessScreen" class="screen">
+
+        <section class="guess-area">
+
+            <div class="guess-card">
+
+                <p class="guess-label">
+                    ✦ I THINK I'VE GOT IT
+                </p>
+
+                <h2>
+                    Are you thinking of...
+                </h2>
+
+
+                <div class="character-image">
+                    <span>?</span>
+                </div>
+
+
+                <h1 id="characterName">
+                    Mystery Person
+                </h1>
+
+                <p id="characterDescription">
+                    Famous person
+                </p>
+
+
+                <div class="guess-buttons">
+
+                    <button
+                        class="correct-button"
+                        id="correctGuessBtn">
+                        ✓ Yes, you got it!
+                    </button>
+
+                    <button
+                        class="wrong-button"
+                        id="wrongGuessBtn">
+                        ✕ No, keep guessing
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+
+    <!-- =========================
+         SUCCESS SCREEN
+    ========================== -->
+    <main id="successScreen" class="screen">
+
+        <section class="result-area">
+
+            <div class="result-card">
+
+                <div class="result-icon">
+                    ★
+                </div>
+
+                <p class="result-small">
+                    FAMOUSGUESS WINS
+                </p>
+
+                <h1>
+                    I knew it!
+                </h1>
+
+                <p>
+                    Another mystery solved.
+                </p>
+
+                <button
+                    class="play-button"
+                    id="playAgainBtn">
+                    Play Again
+                    <span>↻</span>
+                </button>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+
+    <!-- JavaScript will be added later -->
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+
+</body>
+</html>
