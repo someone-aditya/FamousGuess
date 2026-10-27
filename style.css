@@ -1,0 +1,1025 @@
+/* =========================================================
+   FAMOUSGUESS — STYLE.CSS
+========================================================= */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --bg: #070812;
+    --card: #10121f;
+    --card-light: #171a2c;
+
+    --purple: #8b5cf6;
+    --purple-light: #a78bfa;
+    --blue: #4f7cff;
+    --cyan: #34d9ff;
+
+    --text: #ffffff;
+    --muted: #989db5;
+
+    --border: rgba(255, 255, 255, 0.09);
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    min-height: 100vh;
+    font-family: "Inter", sans-serif;
+    color: var(--text);
+    background:
+        radial-gradient(
+            circle at 50% -20%,
+            rgba(107, 72, 255, 0.23),
+            transparent 42%
+        ),
+        var(--bg);
+
+    overflow-x: hidden;
+}
+
+
+/* =========================================================
+   BACKGROUND
+========================================================= */
+
+.background-glow {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+    z-index: -1;
+}
+
+.glow-one {
+    width: 500px;
+    height: 500px;
+
+    background: rgba(119, 67, 255, 0.15);
+
+    top: 5%;
+    left: -250px;
+}
+
+.glow-two {
+    width: 450px;
+    height: 450px;
+
+    background: rgba(40, 115, 255, 0.12);
+
+    right: -200px;
+    bottom: -100px;
+}
+
+
+/* =========================================================
+   SCREENS
+========================================================= */
+
+.screen {
+    display: none;
+    min-height: 100vh;
+}
+
+.screen.active {
+    display: block;
+}
+
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
+.navbar {
+    width: min(1180px, 92%);
+    height: 90px;
+
+    margin: auto;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+
+    font-size: 21px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+.logo-icon {
+    width: 38px;
+    height: 38px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 12px;
+
+    font-size: 20px;
+    font-weight: 900;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--purple),
+            var(--blue)
+        );
+
+    box-shadow:
+        0 0 30px rgba(139, 92, 246, 0.4);
+}
+
+.logo-highlight {
+    color: var(--purple-light);
+}
+
+.nav-button {
+    padding: 11px 18px;
+
+    color: #d5d8e8;
+    background: rgba(255, 255, 255, 0.04);
+
+    border: 1px solid var(--border);
+    border-radius: 10px;
+
+    font-family: inherit;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: 0.25s ease;
+}
+
+.nav-button:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.hero {
+    width: min(900px, 92%);
+    min-height: calc(100vh - 90px);
+
+    margin: auto;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    text-align: center;
+
+    padding-top: 65px;
+    padding-bottom: 80px;
+}
+
+.hero-badge {
+    padding: 8px 14px;
+
+    border-radius: 999px;
+
+    color: #b8a6ff;
+
+    background: rgba(139, 92, 246, 0.09);
+    border: 1px solid rgba(139, 92, 246, 0.18);
+
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+
+    margin-bottom: 25px;
+}
+
+.hero h1 {
+    max-width: 850px;
+
+    font-size: clamp(48px, 7vw, 82px);
+    line-height: 1.02;
+
+    letter-spacing: -4px;
+
+    font-weight: 900;
+}
+
+.hero h1 span {
+    background:
+        linear-gradient(
+            90deg,
+            #9c7cff,
+            #5f8cff,
+            #40d7ff
+        );
+
+    -webkit-background-clip: text;
+    background-clip: text;
+
+    color: transparent;
+}
+
+.hero-description {
+    max-width: 630px;
+
+    margin-top: 24px;
+
+    color: var(--muted);
+
+    font-size: 16px;
+    line-height: 1.8;
+}
+
+
+/* =========================================================
+   MYSTERY ORB
+========================================================= */
+
+.mystery-container {
+    width: 230px;
+    height: 230px;
+
+    margin: 38px 0;
+
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.circle {
+    position: absolute;
+
+    border-radius: 50%;
+}
+
+.circle-one {
+    width: 160px;
+    height: 160px;
+
+    border:
+        1px solid
+        rgba(139, 92, 246, 0.22);
+
+    animation:
+        rotateCircle 8s linear infinite;
+}
+
+.circle-one::before {
+    content: "";
+
+    position: absolute;
+
+    width: 7px;
+    height: 7px;
+
+    border-radius: 50%;
+
+    background: var(--purple-light);
+
+    top: 18px;
+    left: 22px;
+
+    box-shadow:
+        0 0 15px var(--purple);
+}
+
+.circle-two {
+    width: 195px;
+    height: 195px;
+
+    border:
+        1px dashed
+        rgba(90, 123, 255, 0.15);
+
+    animation:
+        rotateCircleReverse 15s linear infinite;
+}
+
+.circle-three {
+    width: 225px;
+    height: 225px;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(121, 82, 255, 0.1),
+            transparent 68%
+        );
+}
+
+.mystery-orb {
+    width: 120px;
+    height: 120px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    position: relative;
+    z-index: 3;
+
+    border-radius: 50%;
+
+    background:
+        linear-gradient(
+            145deg,
+            #191b32,
+            #0e1020
+        );
+
+    border:
+        1px solid
+        rgba(161, 130, 255, 0.3);
+
+    box-shadow:
+        0 0 60px rgba(111, 74, 255, 0.25),
+        inset 0 0 30px rgba(139, 92, 246, 0.08);
+
+    animation:
+        floating 3s ease-in-out infinite;
+}
+
+.mystery-orb span {
+    font-size: 68px;
+    font-weight: 800;
+
+    background:
+        linear-gradient(
+            180deg,
+            #d3c6ff,
+            #7855e8
+        );
+
+    -webkit-background-clip: text;
+    background-clip: text;
+
+    color: transparent;
+}
+
+
+/* =========================================================
+   PLAY BUTTON
+========================================================= */
+
+.play-button {
+    min-width: 215px;
+
+    padding: 16px 24px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+
+    color: white;
+
+    border: none;
+    border-radius: 13px;
+
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+
+    background:
+        linear-gradient(
+            100deg,
+            #7c55ed,
+            #566fff
+        );
+
+    box-shadow:
+        0 10px 35px rgba(103, 83, 240, 0.28);
+
+    cursor: pointer;
+
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+.play-button span {
+    font-size: 19px;
+
+    transition: transform 0.25s ease;
+}
+
+.play-button:hover {
+    transform: translateY(-3px);
+
+    box-shadow:
+        0 15px 45px rgba(103, 83, 240, 0.4);
+}
+
+.play-button:hover span {
+    transform: translateX(4px);
+}
+
+.small-text {
+    color: #62677e;
+
+    font-size: 12px;
+
+    margin-top: 14px;
+}
+
+
+/* =========================================================
+   GAME AREA
+========================================================= */
+
+.game-area {
+    width: min(760px, 92%);
+
+    margin: auto;
+
+    padding:
+        80px 0
+        100px;
+}
+
+.question-counter {
+    text-align: center;
+
+    color: #6f748b;
+
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+}
+
+.question-counter span {
+    color: #a88cff;
+}
+
+.progress-container {
+    width: 100%;
+    height: 5px;
+
+    margin:
+        18px 0
+        30px;
+
+    border-radius: 100px;
+
+    overflow: hidden;
+
+    background: #171927;
+}
+
+.progress-bar {
+    width: 8%;
+    height: 100%;
+
+    border-radius: 100px;
+
+    background:
+        linear-gradient(
+            90deg,
+            var(--purple),
+            var(--blue)
+        );
+
+    transition:
+        width 0.5s ease;
+}
+
+
+/* =========================================================
+   QUESTION CARD
+========================================================= */
+
+.question-card {
+    padding:
+        45px 40px
+        40px;
+
+    text-align: center;
+
+    border-radius: 24px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(20, 22, 38, 0.95),
+            rgba(12, 14, 25, 0.95)
+        );
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.08);
+
+    box-shadow:
+        0 30px 80px
+        rgba(0, 0, 0, 0.25);
+}
+
+.mini-orb {
+    width: 55px;
+    height: 55px;
+
+    margin:
+        0 auto
+        16px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    color: #a991ff;
+
+    font-size: 28px;
+    font-weight: 800;
+
+    background:
+        rgba(139, 92, 246, 0.08);
+
+    border:
+        1px solid
+        rgba(139, 92, 246, 0.18);
+}
+
+.thinking-text {
+    color: #74798f;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+
+    margin-bottom: 13px;
+}
+
+.question-card h2 {
+    max-width: 600px;
+
+    margin: auto;
+
+    font-size: clamp(23px, 4vw, 31px);
+    line-height: 1.35;
+
+    letter-spacing: -0.7px;
+}
+
+
+/* =========================================================
+   ANSWERS
+========================================================= */
+
+.answers {
+    margin-top: 38px;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(5, 1fr);
+
+    gap: 10px;
+}
+
+.answer-button {
+    min-height: 57px;
+
+    padding: 10px;
+
+    border-radius: 11px;
+
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.2s ease,
+        background 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.answer-button:hover {
+    transform: translateY(-3px);
+}
+
+.answer-button.yes {
+    color: #8cf2ba;
+
+    background:
+        rgba(45, 200, 115, 0.08);
+
+    border:
+        1px solid
+        rgba(45, 200, 115, 0.2);
+}
+
+.answer-button.yes:hover {
+    background:
+        rgba(45, 200, 115, 0.15);
+}
+
+.answer-button.probably {
+    color: #98c6ff;
+
+    background:
+        rgba(70, 140, 255, 0.08);
+
+    border:
+        1px solid
+        rgba(70, 140, 255, 0.2);
+}
+
+.answer-button.probably:hover {
+    background:
+        rgba(70, 140, 255, 0.15);
+}
+
+.answer-button.unknown {
+    color: #b6b9c8;
+
+    background:
+        rgba(255, 255, 255, 0.04);
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.09);
+}
+
+.answer-button.unknown:hover {
+    background:
+        rgba(255, 255, 255, 0.08);
+}
+
+.answer-button.probably-not {
+    color: #ffd18b;
+
+    background:
+        rgba(255, 174, 64, 0.07);
+
+    border:
+        1px solid
+        rgba(255, 174, 64, 0.18);
+}
+
+.answer-button.probably-not:hover {
+    background:
+        rgba(255, 174, 64, 0.13);
+}
+
+.answer-button.no {
+    color: #ff9999;
+
+    background:
+        rgba(255, 70, 70, 0.07);
+
+    border:
+        1px solid
+        rgba(255, 70, 70, 0.18);
+}
+
+.answer-button.no:hover {
+    background:
+        rgba(255, 70, 70, 0.13);
+}
+
+
+/* =========================================================
+   GUESS SCREEN
+========================================================= */
+
+.guess-area,
+.result-area {
+    min-height: 100vh;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 40px 20px;
+}
+
+.guess-card,
+.result-card {
+    width: min(520px, 100%);
+
+    padding: 48px 38px;
+
+    text-align: center;
+
+    border-radius: 25px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #131525,
+            #0c0e19
+        );
+
+    border:
+        1px solid
+        var(--border);
+
+    box-shadow:
+        0 30px 100px
+        rgba(0, 0, 0, 0.35);
+}
+
+.guess-label,
+.result-small {
+    color: #9b82ff;
+
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+
+    margin-bottom: 14px;
+}
+
+.guess-card > h2 {
+    font-size: 20px;
+    color: #d9dbea;
+
+    margin-bottom: 25px;
+}
+
+.character-image {
+    width: 145px;
+    height: 145px;
+
+    margin:
+        0 auto
+        25px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    font-size: 70px;
+    font-weight: 900;
+
+    color: #9f83ff;
+
+    background:
+        radial-gradient(
+            circle,
+            #222543,
+            #111321
+        );
+
+    border:
+        2px solid
+        rgba(139, 92, 246, 0.25);
+
+    box-shadow:
+        0 0 50px
+        rgba(139, 92, 246, 0.15);
+}
+
+.guess-card h1 {
+    font-size: 36px;
+
+    letter-spacing: -1.2px;
+}
+
+.guess-card > p#characterDescription {
+    margin-top: 9px;
+
+    color: var(--muted);
+}
+
+.guess-buttons {
+    display: grid;
+
+    gap: 10px;
+
+    margin-top: 32px;
+}
+
+.correct-button,
+.wrong-button {
+    padding: 15px 20px;
+
+    border-radius: 11px;
+
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.2s ease,
+        background 0.2s ease;
+}
+
+.correct-button {
+    color: white;
+
+    border: none;
+
+    background:
+        linear-gradient(
+            100deg,
+            #7452e9,
+            #536dff
+        );
+}
+
+.wrong-button {
+    color: #b8bbca;
+
+    border:
+        1px solid
+        var(--border);
+
+    background:
+        rgba(255, 255, 255, 0.035);
+}
+
+.correct-button:hover,
+.wrong-button:hover {
+    transform: translateY(-2px);
+}
+
+
+/* =========================================================
+   RESULT SCREEN
+========================================================= */
+
+.result-icon {
+    width: 80px;
+    height: 80px;
+
+    margin:
+        0 auto
+        25px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    color: #ffdd7d;
+
+    font-size: 35px;
+
+    background:
+        rgba(255, 201, 74, 0.08);
+
+    border:
+        1px solid
+        rgba(255, 201, 74, 0.2);
+
+    box-shadow:
+        0 0 50px
+        rgba(255, 195, 60, 0.1);
+}
+
+.result-card h1 {
+    font-size: 42px;
+
+    letter-spacing: -1.5px;
+
+    margin-bottom: 10px;
+}
+
+.result-card > p:not(.result-small) {
+    color: var(--muted);
+
+    margin-bottom: 30px;
+}
+
+.result-card .play-button {
+    margin: auto;
+}
+
+
+/* =========================================================
+   ANIMATIONS
+========================================================= */
+
+@keyframes floating {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes rotateCircle {
+
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes rotateCircleReverse {
+
+    from {
+        transform: rotate(360deg);
+    }
+
+    to {
+        transform: rotate(0deg);
+    }
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 720px) {
+
+    .navbar {
+        height: 75px;
+    }
+
+    .hero {
+        padding-top: 45px;
+    }
+
+    .hero h1 {
+        letter-spacing: -2.5px;
+    }
+
+    .answers {
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+    .answer-button.unknown {
+        grid-column:
+            span 2;
+    }
+
+    .question-card {
+        padding:
+            35px 20px
+            25px;
+    }
+
+    .game-area {
+        padding-top: 45px;
+    }
+}
+
+
+@media (max-width: 480px) {
+
+    .logo {
+        font-size: 18px;
+    }
+
+    .logo-icon {
+        width: 34px;
+        height: 34px;
+    }
+
+    .hero h1 {
+        font-size: 45px;
+    }
+
+    .hero-description {
+        font-size: 14px;
+    }
+
+    .mystery-container {
+        transform: scale(0.9);
+
+        margin:
+            25px 0;
+    }
+
+    .guess-card,
+    .result-card {
+        padding:
+            40px 22px;
+    }
+}
