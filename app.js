@@ -158,15 +158,52 @@ function showScreen(screen) {
 
 ========================================================= */
 
+/* =========================================================
+   TRAIT READER V4
+
+   Returns:
+
+   1    = YES
+   0.5  = MAYBE / PARTLY TRUE
+   0    = NO
+   null = DATABASE DOESN'T KNOW
+========================================================= */
+
 function traitValue(character, trait) {
+
+    if (
+        character.yes &&
+        character.yes.includes(trait)
+    ) {
+        return 1;
+    }
+
+
+    if (
+        character.maybe &&
+        character.maybe.includes(trait)
+    ) {
+        return 0.5;
+    }
+
+
+    if (
+        character.no &&
+        character.no.includes(trait)
+    ) {
+        return 0;
+    }
+
+
+    /*
+       Compatibility with our older V2 records.
+    */
 
     if (
         character.traits &&
         character.traits.includes(trait)
     ) {
-
         return 1;
-
     }
 
 
@@ -174,13 +211,16 @@ function traitValue(character, trait) {
         character.uncertain &&
         character.uncertain.includes(trait)
     ) {
-
         return 0.5;
-
     }
 
 
-    return 0;
+    /*
+       CRITICAL:
+       Missing data does NOT mean No.
+    */
+
+    return null;
 }
 
 
@@ -381,11 +421,57 @@ function probabilities() {
 /* =========================================================
    LIKELIHOOD
 ========================================================= */
+function likelihood(expected, answer) {
 
-function likelihood(
-    expected,
-    answer
-) {
+    /*
+       Player selected Don't Know.
+       This gives us no evidence.
+    */
+
+    if (answer === null) {
+        return 1;
+    }
+
+
+    /*
+       FamousGuess itself doesn't know this trait.
+
+       Do NOT reward or punish the candidate.
+    */
+
+    if (expected === null) {
+        return 1;
+    }
+
+
+    const difference =
+        Math.abs(
+            expected - answer
+        );
+
+
+    if (difference <= 0.05) {
+        return 0.97;
+    }
+
+
+    if (difference <= 0.25) {
+        return 0.82;
+    }
+
+
+    if (difference <= 0.5) {
+        return 0.50;
+    }
+
+
+    if (difference <= 0.75) {
+        return 0.18;
+    }
+
+
+    return 0.035;
+}{
 
     if (answer === null) {
 
@@ -596,10 +682,9 @@ function chooseQuestion() {
     available.forEach(question => {
 
         let yes = 0;
-
         let no = 0;
-
         let uncertain = 0;
+        let unknown = 0;
 
 
         importantCandidates.forEach(
@@ -616,29 +701,40 @@ function chooseQuestion() {
 
 
                 const value =
-                    traitValue(
-                        candidate.character,
-                        question.id
-                    );
+    traitValue(
+        candidate.character,
+        question.id
+    );
 
 
-                if (value >= 0.75) {
+/*
+   Missing knowledge is different from
+   a Maybe answer.
+*/
 
-                    yes += weight;
+if (value === null) {
 
-                }
+    unknown += weight;
 
-                else if (value <= 0.25) {
+}
 
-                    no += weight;
+else if (value >= 0.75) {
 
-                }
+    yes += weight;
 
-                else {
+}
 
-                    uncertain += weight;
+else if (value <= 0.25) {
 
-                }
+    no += weight;
+
+}
+
+else {
+
+    uncertain += weight;
+
+}
 
             }
         );
@@ -673,9 +769,19 @@ function chooseQuestion() {
         /*
            Penalize uncertainty.
         */
+/*
+   Questions with lots of unknown database
+   information are less useful.
 
-        information -=
-            uncertain * 0.2;
+   This stops FamousGuess asking questions
+   that only 2% of its database understands.
+*/
+
+information -=
+    uncertain * 0.15;
+
+information -=
+    unknown * 0.70;
 
 
         /*
