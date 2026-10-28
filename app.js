@@ -1,11 +1,11 @@
 /* =========================================================
-   FAMOUSGUESS — APP.JS
-   Smart guessing engine
+   FAMOUSGUESS V2 — APP.JS
+   Intelligent adaptive guessing engine
 ========================================================= */
 
 
 /* =========================================================
-   ELEMENTS
+   DOM
 ========================================================= */
 
 const homeScreen = document.getElementById("homeScreen");
@@ -25,24 +25,50 @@ const questionNumber = document.getElementById("questionNumber");
 const progressBar = document.getElementById("progressBar");
 
 const characterName = document.getElementById("characterName");
-const characterDescription = document.getElementById(
-    "characterDescription"
-);
+const characterDescription =
+    document.getElementById("characterDescription");
 
-const characterImage = document.querySelector(".character-image");
+const characterImage =
+    document.querySelector(".character-image");
 
-const answerButtons = document.querySelectorAll(
-    ".answer-button"
-);
+const answerButtons =
+    document.querySelectorAll(".answer-button");
+
+const howToPlayBtn =
+    document.getElementById("howToPlayBtn");
+
+
+/* =========================================================
+   SETTINGS
+========================================================= */
+
+const SETTINGS = {
+
+    minQuestionsBeforeGuess: 5,
+
+    normalGuessPoint: 10,
+
+    hardGuessPoint: 16,
+
+    absoluteMaximumQuestions: 24,
+
+    confidenceToGuess: 0.72,
+
+    minimumLeadToGuess: 0.16,
+
+    topCandidatesForQuestions: 14
+};
 
 
 /* =========================================================
    GAME STATE
 ========================================================= */
 
-let scores = {};
+let candidates = [];
 
 let askedQuestions = [];
+
+let answerHistory = [];
 
 let currentQuestion = null;
 
@@ -50,11 +76,9 @@ let currentGuess = null;
 
 let rejectedCharacters = [];
 
-let totalAnswers = 0;
+let questionCount = 0;
 
-const MAX_QUESTIONS_BEFORE_GUESS = 12;
-
-const MIN_QUESTIONS_BEFORE_GUESS = 4;
+let gameFinished = false;
 
 
 /* =========================================================
@@ -66,10 +90,14 @@ function showScreen(screen) {
     document
         .querySelectorAll(".screen")
         .forEach(item => {
+
             item.classList.remove("active");
+
         });
 
+
     screen.classList.add("active");
+
 
     window.scrollTo({
         top: 0,
@@ -79,14 +107,40 @@ function showScreen(screen) {
 
 
 /* =========================================================
+   CREATE CANDIDATES
+========================================================= */
+
+function createCandidates() {
+
+    return characters.map(character => ({
+
+        character: character,
+
+        /*
+           We use log scores instead of constantly
+           multiplying tiny probabilities.
+
+           Every candidate begins equally likely.
+        */
+
+        score: 0
+
+    }));
+
+}
+
+
+/* =========================================================
    START GAME
 ========================================================= */
 
 function startGame() {
 
-    scores = {};
+    candidates = createCandidates();
 
     askedQuestions = [];
+
+    answerHistory = [];
 
     rejectedCharacters = [];
 
@@ -94,34 +148,31 @@ function startGame() {
 
     currentGuess = null;
 
-    totalAnswers = 0;
+    questionCount = 0;
+
+    gameFinished = false;
 
 
-    /* Every character starts equally */
-
-    characters.forEach(character => {
-
-        scores[character.name] = 100;
-
-    });
+    restoreGuessButtons();
 
 
     showScreen(gameScreen);
+
 
     askNextQuestion();
 }
 
 
 /* =========================================================
-   GET AVAILABLE CHARACTERS
+   GET ACTIVE CANDIDATES
 ========================================================= */
 
-function getAvailableCharacters() {
+function getActiveCandidates() {
 
-    return characters.filter(character => {
+    return candidates.filter(candidate => {
 
         return !rejectedCharacters.includes(
-            character.name
+            candidate.character.id
         );
 
     });
@@ -130,38 +181,281 @@ function getAvailableCharacters() {
 
 
 /* =========================================================
-   SORT CHARACTERS BY SCORE
+   SORT CANDIDATES
 ========================================================= */
 
-function getRankedCharacters() {
+function getRankedCandidates() {
 
-    return getAvailableCharacters()
-        .map(character => {
+    return getActiveCandidates()
+        .slice()
+        .sort(
+            (a, b) =>
+                b.score - a.score
+        );
 
-            return {
+}
 
-                character: character,
 
-                score:
-                    scores[character.name] || 0
+/* =========================================================
+   SOFTMAX CONFIDENCE
 
-            };
+   Converts raw scores into probabilities.
+========================================================= */
 
-        })
-        .sort((a, b) => {
+function calculateProbabilities() {
 
-            return b.score - a.score;
+    const ranked =
+        getRankedCandidates();
+
+
+    if (!ranked.length) {
+
+        return [];
+
+    }
+
+
+    const maxScore =
+        ranked[0].score;
+
+
+    const exponentials =
+        ranked.map(candidate => {
+
+            /*
+               Temperature prevents FamousGuess
+               becoming overconfident too quickly.
+            */
+
+            const temperature = 2.2;
+
+
+            return Math.exp(
+                (
+                    candidate.score -
+                    maxScore
+                ) /
+                temperature
+            );
 
         });
+
+
+    const total =
+        exponentials.reduce(
+            (sum, value) =>
+                sum + value,
+            0
+        );
+
+
+    return ranked.map(
+        (candidate, index) => ({
+
+            ...candidate,
+
+            probability:
+                exponentials[index] /
+                total
+
+        })
+    );
+
+}
+
+
+/* =========================================================
+   ANSWER LIKELIHOOD
+
+   How compatible is a user's answer with
+   a character's known trait?
+========================================================= */
+
+function getAnswerLikelihood(
+    traitValue,
+    answerValue
+) {
+
+    if (answerValue === null) {
+
+        return 1;
+
+    }
+
+
+    const difference =
+        Math.abs(
+            traitValue -
+            answerValue
+        );
+
+
+    /*
+       Perfect match
+    */
+
+    if (difference <= 0.05) {
+
+        return 0.94;
+
+    }
+
+
+    /*
+       Strong match
+    */
+
+    if (difference <= 0.25) {
+
+        return 0.76;
+
+    }
+
+
+    /*
+       Uncertain match
+    */
+
+    if (difference <= 0.5) {
+
+        return 0.42;
+
+    }
+
+
+    /*
+       Strong disagreement
+    */
+
+    if (difference <= 0.75) {
+
+        return 0.16;
+
+    }
+
+
+    /*
+       Complete disagreement
+    */
+
+    return 0.045;
+
+}
+
+
+/* =========================================================
+   APPLY ANSWER
+========================================================= */
+
+function applyAnswer(answerType) {
+
+    if (!currentQuestion) {
+
+        return;
+
+    }
+
+
+    const answerValue =
+        answerValues[answerType];
+
+
+    answerHistory.push({
+
+        question:
+            currentQuestion.id,
+
+        answer:
+            answerType
+
+    });
+
+
+    /*
+       Don't Know provides no evidence.
+    */
+
+    if (answerValue !== null) {
+
+        candidates.forEach(candidate => {
+
+            if (
+                rejectedCharacters.includes(
+                    candidate.character.id
+                )
+            ) {
+
+                return;
+
+            }
+
+
+            const traitValue =
+                getTraitValue(
+                    candidate.character,
+                    currentQuestion.id
+                );
+
+
+            const likelihood =
+                getAnswerLikelihood(
+                    traitValue,
+                    answerValue
+                );
+
+
+            /*
+               Bayesian-style scoring.
+
+               Log likelihoods make scores stable.
+            */
+
+            candidate.score +=
+                Math.log(likelihood);
+
+        });
+
+    }
+
+
+    questionCount++;
+
+
+    transitionToNextQuestion();
+}
+
+
+/* =========================================================
+   ENTROPY
+========================================================= */
+
+function binaryEntropy(probability) {
+
+    if (
+        probability <= 0 ||
+        probability >= 1
+    ) {
+
+        return 0;
+
+    }
+
+
+    return -(
+        probability *
+            Math.log2(probability)
+        +
+        (1 - probability) *
+            Math.log2(
+                1 - probability
+            )
+    );
 
 }
 
 
 /* =========================================================
    CHOOSE BEST QUESTION
-
-   Instead of asking questions randomly, we find a question
-   that divides the strongest candidates as evenly as possible.
 ========================================================= */
 
 function chooseBestQuestion() {
@@ -176,108 +470,164 @@ function chooseBestQuestion() {
         });
 
 
-    if (availableQuestions.length === 0) {
+    if (!availableQuestions.length) {
 
         return null;
 
     }
 
 
-    const ranked = getRankedCharacters();
+    const probabilityCandidates =
+        calculateProbabilities();
+
 
     /*
-       Only use the strongest candidates when deciding
-       what question to ask next.
+       Focus mostly on candidates that are still
+       reasonably possible.
     */
 
-    const candidates =
-        ranked
+    const strongest =
+        probabilityCandidates
             .slice(
                 0,
-                Math.min(
-                    ranked.length,
-                    12
-                )
-            )
-            .map(item => item.character);
+                SETTINGS
+                    .topCandidatesForQuestions
+            );
+
+
+    if (!strongest.length) {
+
+        return availableQuestions[0];
+
+    }
 
 
     let bestQuestion = null;
 
-    let bestValue = Infinity;
+    let bestScore = -Infinity;
 
 
     availableQuestions.forEach(question => {
 
-        let yesCount = 0;
+        let weightedYes = 0;
 
-        let noCount = 0;
+        let weightedNo = 0;
 
-        let middleCount = 0;
+        let weightedUncertain = 0;
+
+        let totalWeight = 0;
 
 
-        candidates.forEach(character => {
+        strongest.forEach(candidate => {
 
-            const value =
-                character.traits[
+            const trait =
+                getTraitValue(
+                    candidate.character,
                     question.id
-                ];
+                );
 
 
-            if (value >= 0.75) {
+            const weight =
+                candidate.probability;
 
-                yesCount++;
+
+            totalWeight += weight;
+
+
+            if (trait >= 0.75) {
+
+                weightedYes += weight;
 
             }
 
-            else if (value <= 0.25) {
+            else if (trait <= 0.25) {
 
-                noCount++;
+                weightedNo += weight;
 
             }
 
             else {
 
-                middleCount++;
+                weightedUncertain += weight;
 
             }
 
         });
 
 
+        if (totalWeight <= 0) {
+
+            return;
+
+        }
+
+
+        weightedYes /= totalWeight;
+        weightedNo /= totalWeight;
+        weightedUncertain /= totalWeight;
+
+
         /*
-           A useful question should divide candidates
-           close to 50 / 50.
+           Questions are useful when candidates
+           disagree about the answer.
+
+           50% yes / 50% no is excellent.
+           100% yes is useless.
         */
 
-        const difference =
-            Math.abs(
-                yesCount - noCount
+        const yesProbability =
+            weightedYes +
+            weightedUncertain * 0.5;
+
+
+        let informationScore =
+            binaryEntropy(
+                yesProbability
             );
 
 
         /*
-           Penalize questions where almost everyone
-           has an uncertain value.
+           Too many uncertain characters makes a
+           question less trustworthy.
         */
 
-        const uncertaintyPenalty =
-            middleCount * 0.8;
+        informationScore -=
+            weightedUncertain * 0.25;
 
 
-        const questionValue =
-            difference +
-            uncertaintyPenalty;
+        /*
+           Priority from data.js gives important
+           questions a small bonus.
+        */
+
+        informationScore +=
+            (
+                question.priority || 5
+            ) * 0.012;
+
+
+        /*
+           Don't ask a question when almost every
+           remaining candidate has the same answer.
+        */
+
+        if (
+            weightedYes > 0.96 ||
+            weightedNo > 0.96
+        ) {
+
+            informationScore -= 1;
+
+        }
 
 
         if (
-            yesCount > 0 &&
-            noCount > 0 &&
-            questionValue < bestValue
+            informationScore >
+            bestScore
         ) {
 
-            bestValue =
-                questionValue;
+            bestScore =
+                informationScore;
 
             bestQuestion =
                 question;
@@ -287,19 +637,106 @@ function chooseBestQuestion() {
     });
 
 
-    /*
-       Fallback if no ideal question exists
-    */
+    return bestQuestion;
 
-    if (!bestQuestion) {
+}
 
-        bestQuestion =
-            availableQuestions[0];
+
+/* =========================================================
+   SHOULD WE GUESS?
+========================================================= */
+
+function shouldMakeGuess() {
+
+    if (
+        questionCount <
+        SETTINGS.minQuestionsBeforeGuess
+    ) {
+
+        return false;
 
     }
 
 
-    return bestQuestion;
+    const ranked =
+        calculateProbabilities();
+
+
+    if (!ranked.length) {
+
+        return true;
+
+    }
+
+
+    if (ranked.length === 1) {
+
+        return true;
+
+    }
+
+
+    const first =
+        ranked[0];
+
+    const second =
+        ranked[1];
+
+
+    const lead =
+        first.probability -
+        second.probability;
+
+
+    /*
+       Very confident.
+    */
+
+    if (
+        first.probability >=
+            SETTINGS.confidenceToGuess
+        &&
+        lead >=
+            SETTINGS.minimumLeadToGuess
+    ) {
+
+        return true;
+
+    }
+
+
+    /*
+       At 10 questions we can guess if confidence
+       is reasonably strong.
+    */
+
+    if (
+        questionCount >=
+            SETTINGS.normalGuessPoint
+        &&
+        first.probability >= 0.52
+    ) {
+
+        return true;
+
+    }
+
+
+    /*
+       Don't make the player wait forever.
+    */
+
+    if (
+        questionCount >=
+        SETTINGS.hardGuessPoint
+    ) {
+
+        return true;
+
+    }
+
+
+    return false;
 
 }
 
@@ -310,11 +747,18 @@ function chooseBestQuestion() {
 
 function askNextQuestion() {
 
+    if (gameFinished) {
+
+        return;
+
+    }
+
+
     const ranked =
-        getRankedCharacters();
+        calculateProbabilities();
 
 
-    if (ranked.length === 0) {
+    if (!ranked.length) {
 
         showFailure();
 
@@ -323,63 +767,20 @@ function askNextQuestion() {
     }
 
 
-    /*
-       Check if FamousGuess is confident enough.
-    */
+    if (shouldMakeGuess()) {
 
-    if (
-        totalAnswers >=
-        MIN_QUESTIONS_BEFORE_GUESS
-    ) {
+        makeGuess(
+            ranked[0].character
+        );
 
-        const first =
-            ranked[0];
-
-        const second =
-            ranked[1];
-
-
-        if (!second) {
-
-            makeGuess(
-                first.character
-            );
-
-            return;
-
-        }
-
-
-        const lead =
-            first.score -
-            second.score;
-
-
-        /*
-           Large lead means one character is
-           clearly more likely.
-        */
-
-        if (lead >= 70) {
-
-            makeGuess(
-                first.character
-            );
-
-            return;
-
-        }
+        return;
 
     }
 
 
-    /*
-       Don't make the player answer forever.
-    */
-
     if (
-        totalAnswers >=
-        MAX_QUESTIONS_BEFORE_GUESS
+        questionCount >=
+        SETTINGS.absoluteMaximumQuestions
     ) {
 
         makeGuess(
@@ -416,7 +817,7 @@ function askNextQuestion() {
 
 
     questionNumber.textContent =
-        totalAnswers + 1;
+        questionCount + 1;
 
 
     updateProgress();
@@ -425,117 +826,10 @@ function askNextQuestion() {
 
 
 /* =========================================================
-   HANDLE ANSWER
-========================================================= */
-
-function handleAnswer(answerType) {
-
-    if (!currentQuestion) {
-
-        return;
-
-    }
-
-
-    const answer =
-        answerValues[
-            answerType
-        ];
-
-
-    /*
-       Don't Know doesn't affect scores.
-    */
-
-    if (answer !== null) {
-
-        characters.forEach(character => {
-
-            if (
-                rejectedCharacters.includes(
-                    character.name
-                )
-            ) {
-
-                return;
-
-            }
-
-
-            const traitValue =
-                character.traits[
-                    currentQuestion.id
-                ];
-
-
-            /*
-               Difference between user's answer
-               and database value.
-
-               0 difference = perfect match.
-               1 difference = complete mismatch.
-            */
-
-            const difference =
-                Math.abs(
-                    traitValue -
-                    answer
-                );
-
-
-            let scoreChange;
-
-
-            if (difference <= 0.1) {
-
-                scoreChange = 35;
-
-            }
-
-            else if (
-                difference <= 0.3
-            ) {
-
-                scoreChange = 15;
-
-            }
-
-            else if (
-                difference <= 0.55
-            ) {
-
-                scoreChange = -15;
-
-            }
-
-            else {
-
-                scoreChange = -45;
-
-            }
-
-
-            scores[
-                character.name
-            ] += scoreChange;
-
-        });
-
-    }
-
-
-    totalAnswers++;
-
-    animateQuestionChange();
-
-}
-
-
-/* =========================================================
    QUESTION TRANSITION
 ========================================================= */
 
-function animateQuestionChange() {
+function transitionToNextQuestion() {
 
     const card =
         document.querySelector(
@@ -543,10 +837,14 @@ function animateQuestionChange() {
         );
 
 
+    card.style.transition =
+        "0.18s ease";
+
+
     card.style.opacity = "0";
 
     card.style.transform =
-        "translateY(10px)";
+        "translateY(8px) scale(0.99)";
 
 
     setTimeout(() => {
@@ -554,13 +852,17 @@ function animateQuestionChange() {
         askNextQuestion();
 
 
-        card.style.transition =
-            "0.3s ease";
+        requestAnimationFrame(() => {
 
-        card.style.opacity = "1";
+            card.style.transition =
+                "0.28s ease";
 
-        card.style.transform =
-            "translateY(0)";
+            card.style.opacity = "1";
+
+            card.style.transform =
+                "translateY(0) scale(1)";
+
+        });
 
     }, 180);
 
@@ -568,7 +870,7 @@ function animateQuestionChange() {
 
 
 /* =========================================================
-   UPDATE PROGRESS
+   PROGRESS
 ========================================================= */
 
 function updateProgress() {
@@ -576,8 +878,8 @@ function updateProgress() {
     const percentage =
         Math.min(
             (
-                totalAnswers /
-                MAX_QUESTIONS_BEFORE_GUESS
+                questionCount /
+                SETTINGS.hardGuessPoint
             ) * 100,
             100
         );
@@ -610,17 +912,20 @@ function makeGuess(character) {
         character.description;
 
 
-    /*
-       Images will be added later.
-    */
-
     if (character.image) {
 
-        characterImage.innerHTML =
-            `<img
+        characterImage.innerHTML = `
+            <img
                 src="${character.image}"
                 alt="${character.name}"
-             >`;
+                style="
+                    width:100%;
+                    height:100%;
+                    object-fit:cover;
+                    border-radius:50%;
+                "
+            >
+        `;
 
     }
 
@@ -645,6 +950,12 @@ function makeGuess(character) {
 
 function correctGuess() {
 
+    gameFinished = true;
+
+
+    saveGameStatistics(true);
+
+
     showScreen(
         successScreen
     );
@@ -665,30 +976,53 @@ function wrongGuess() {
     }
 
 
-    /*
-       Remove the incorrect guess.
-    */
-
     rejectedCharacters.push(
-        currentGuess.name
+        currentGuess.id
     );
 
 
-    scores[
-        currentGuess.name
-    ] =
-        -999999;
+    /*
+       Give rejected candidate effectively
+       zero probability.
+    */
+
+    const rejected =
+        candidates.find(
+            candidate =>
+                candidate.character.id ===
+                currentGuess.id
+        );
+
+
+    if (rejected) {
+
+        rejected.score = -9999;
+
+    }
 
 
     currentGuess = null;
 
 
+    const remaining =
+        getActiveCandidates();
+
+
+    if (!remaining.length) {
+
+        showFailure();
+
+        return;
+
+    }
+
+
     /*
-       Continue questioning if possible.
+       If questions remain, continue thinking.
     */
 
-    const remainingQuestions =
-        questions.filter(question => {
+    const questionsRemaining =
+        questions.some(question => {
 
             return !askedQuestions.includes(
                 question.id
@@ -697,57 +1031,80 @@ function wrongGuess() {
         });
 
 
-    if (
-        remainingQuestions.length > 0
-    ) {
-
-        /*
-           Allow extra questions after
-           an incorrect guess.
-        */
-
-        totalAnswers =
-            Math.min(
-                totalAnswers,
-                MAX_QUESTIONS_BEFORE_GUESS - 2
-            );
-
+    if (questionsRemaining) {
 
         showScreen(
             gameScreen
         );
 
 
-        askNextQuestion();
-
-    }
-
-    else {
-
         /*
-           No questions left.
-           Guess the next best character.
+           We don't immediately trigger the normal
+           forced-guess rule after being wrong.
         */
 
-        const ranked =
-            getRankedCharacters();
+        currentQuestion =
+            chooseBestQuestion();
 
 
-        if (ranked.length > 0) {
+        if (currentQuestion) {
 
-            makeGuess(
-                ranked[0].character
+            askedQuestions.push(
+                currentQuestion.id
             );
+
+
+            questionText.textContent =
+                currentQuestion.text;
+
+
+            questionNumber.textContent =
+                questionCount + 1;
+
+
+            updateProgress();
 
         }
 
         else {
 
-            showFailure();
+            guessNextCandidate();
 
         }
 
     }
+
+    else {
+
+        guessNextCandidate();
+
+    }
+
+}
+
+
+/* =========================================================
+   GUESS NEXT CANDIDATE
+========================================================= */
+
+function guessNextCandidate() {
+
+    const ranked =
+        calculateProbabilities();
+
+
+    if (!ranked.length) {
+
+        showFailure();
+
+        return;
+
+    }
+
+
+    makeGuess(
+        ranked[0].character
+    );
 
 }
 
@@ -758,11 +1115,22 @@ function wrongGuess() {
 
 function showFailure() {
 
+    gameFinished = true;
+
+
+    saveGameStatistics(false);
+
+
+    currentGuess = null;
+
+
     characterName.textContent =
-        "You beat me!";
+        "You beat FamousGuess!";
+
 
     characterDescription.textContent =
         "I couldn't figure out who you were thinking of.";
+
 
     characterImage.innerHTML =
         "<span>!</span>";
@@ -773,11 +1141,11 @@ function showFailure() {
 
 
     wrongGuessBtn.textContent =
-        "Play Again";
+        "↻ Play Again";
 
 
     wrongGuessBtn.onclick =
-        resetGame;
+        startGame;
 
 
     showScreen(
@@ -788,25 +1156,93 @@ function showFailure() {
 
 
 /* =========================================================
-   RESET
+   RESTORE GUESS BUTTONS
 ========================================================= */
 
-function resetGame() {
-
-    /*
-       Restore buttons in case failure screen
-       modified them.
-    */
+function restoreGuessButtons() {
 
     correctGuessBtn.style.display =
         "";
 
+
     wrongGuessBtn.textContent =
         "✕ No, keep guessing";
+
 
     wrongGuessBtn.onclick =
         wrongGuess;
 
+}
+
+
+/* =========================================================
+   STATISTICS
+========================================================= */
+
+function saveGameStatistics(won) {
+
+    let stats;
+
+
+    try {
+
+        stats =
+            JSON.parse(
+                localStorage.getItem(
+                    "famousGuessStats"
+                )
+            ) || {};
+
+    }
+
+    catch {
+
+        stats = {};
+
+    }
+
+
+    stats.gamesPlayed =
+        (stats.gamesPlayed || 0) + 1;
+
+
+    if (won) {
+
+        stats.correctGuesses =
+            (stats.correctGuesses || 0) + 1;
+
+    }
+
+    else {
+
+        stats.playerWins =
+            (stats.playerWins || 0) + 1;
+
+    }
+
+
+    stats.totalQuestions =
+        (stats.totalQuestions || 0) +
+        questionCount;
+
+
+    localStorage.setItem(
+        "famousGuessStats",
+        JSON.stringify(stats)
+    );
+
+}
+
+
+/* =========================================================
+   RESET TO HOME
+========================================================= */
+
+function resetToHome() {
+
+    gameFinished = true;
+
+    restoreGuessButtons();
 
     showScreen(
         homeScreen
@@ -825,11 +1261,19 @@ answerButtons.forEach(button => {
         "click",
         () => {
 
-            const answer =
+            if (!currentQuestion) {
+
+                return;
+
+            }
+
+
+            const answerType =
                 button.dataset.answer;
 
-            handleAnswer(
-                answer
+
+            applyAnswer(
+                answerType
             );
 
         }
@@ -839,7 +1283,7 @@ answerButtons.forEach(button => {
 
 
 /* =========================================================
-   MAIN BUTTON EVENTS
+   BUTTON EVENTS
 ========================================================= */
 
 startGameBtn.addEventListener(
@@ -850,7 +1294,7 @@ startGameBtn.addEventListener(
 
 quitGameBtn.addEventListener(
     "click",
-    resetGame
+    resetToHome
 );
 
 
@@ -866,21 +1310,20 @@ correctGuessBtn.addEventListener(
 );
 
 
-wrongGuessBtn.addEventListener(
-    "click",
-    wrongGuess
-);
+/*
+   IMPORTANT:
+
+   We use onclick here because failure mode can
+   temporarily change what this button does.
+*/
+
+wrongGuessBtn.onclick =
+    wrongGuess;
 
 
 /* =========================================================
    HOW TO PLAY
 ========================================================= */
-
-const howToPlayBtn =
-    document.getElementById(
-        "howToPlayBtn"
-    );
-
 
 howToPlayBtn.addEventListener(
     "click",
@@ -888,11 +1331,18 @@ howToPlayBtn.addEventListener(
 
         alert(
             "HOW TO PLAY\n\n" +
+
             "1. Think of a famous person or fictional character.\n\n" +
-            "2. Don't tell FamousGuess who it is.\n\n" +
-            "3. Answer each question honestly.\n\n" +
-            "4. FamousGuess will narrow down the possibilities.\n\n" +
-            "5. See if it can guess who you're thinking of!"
+
+            "2. Keep their identity secret.\n\n" +
+
+            "3. Answer FamousGuess honestly.\n\n" +
+
+            "4. Use Probably or Probably Not if you aren't completely sure.\n\n" +
+
+            "5. Choose Don't Know when you genuinely don't know the answer.\n\n" +
+
+            "6. FamousGuess will use your answers to narrow down the possibilities and make a prediction."
         );
 
     }
@@ -900,9 +1350,54 @@ howToPlayBtn.addEventListener(
 
 
 /* =========================================================
-   INITIAL SCREEN
+   DEBUGGING
+
+   Open browser console and type:
+
+       FamousGuessDebug()
+
+   to see the current ranking.
+========================================================= */
+
+window.FamousGuessDebug =
+    function () {
+
+        const ranking =
+            calculateProbabilities()
+                .slice(0, 10)
+                .map(candidate => ({
+
+                    name:
+                        candidate.character.name,
+
+                    confidence:
+                        (
+                            candidate.probability *
+                            100
+                        ).toFixed(2) + "%",
+
+                    score:
+                        candidate.score.toFixed(3)
+
+                }));
+
+
+        console.table(
+            ranking
+        );
+
+    };
+
+
+/* =========================================================
+   INITIALIZE
 ========================================================= */
 
 showScreen(
     homeScreen
+);
+
+
+console.log(
+    "🧠 FamousGuess V2 engine ready."
 );
