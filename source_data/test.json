@@ -1,0 +1,61 @@
+[
+    {
+        "type": "person",
+        "name": "Cristiano Ronaldo",
+        "description": "Portuguese footballer",
+        "gender": "male",
+        "birthYear": 1985,
+        "occupations": [
+            "association football player"
+        ],
+        "nationality": [
+            "Portugal"
+        ]
+    },
+
+    {
+        "type": "person",
+        "name": "Virat Kohli",
+        "description": "Indian cricketer",
+        "gender": "male",
+        "birthYear": 1988,
+        "occupations": [
+            "cricketer"
+        ],
+        "nationality": [
+            "India"
+        ]
+    },
+
+    {
+        "type": "fictional",
+        "name": "Spider-Man",
+        "description": "Marvel superhero",
+        "gender": "male",
+        "universe": "Marvel",
+        "traits": [
+            "human",
+            "superhero",
+            "comicCharacter",
+            "movieCharacter",
+            "powers",
+            "mask",
+            "hero"
+        ]
+    },
+
+    {
+        "type": "fictional",
+        "name": "Naruto Uzumaki",
+        "description": "Ninja from Naruto",
+        "gender": "male",
+        "universe": "Naruto",
+        "traits": [
+            "human",
+            "anime",
+            "mainCharacter",
+            "hero",
+            "powers"
+        ]
+    }
+]
